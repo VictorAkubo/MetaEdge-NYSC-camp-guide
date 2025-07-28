@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "metaedge-nysc-camp-guide",
-    "slug": "snack-e20aadcf-00bf-4d7e-bddd-ee427ba1347d",
+    "slug": "snack-dfac3bdd-d01f-4644-989d-208e3020f405",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -16,6 +16,22 @@
       "supportsTablet": true
     },
     "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true
+    },
+    "androidStatusBar": {
+      "backgroundColor": "#ffffff"
+    },
+    "androidNavigationBar": {
+      "visible": true
+    },
+    "android": {
+      "config": {
+        "googleMobileAdsAppId": "ca-app-pub-6146316785763626~4324312217"
+      },
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
