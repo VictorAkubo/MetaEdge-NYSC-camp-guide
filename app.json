@@ -13,10 +13,11 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.metaedge.campguide" 
     },
     "android": {
-      "package": "com.metaedge.campguide",  // <-- ADD THIS
+      "package": "com.metaedge.campguide",
       "config": {
         "googleMobileAdsAppId": "ca-app-pub-6146316785763626~4324312217"
       },
