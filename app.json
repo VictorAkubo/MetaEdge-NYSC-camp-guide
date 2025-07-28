@@ -16,6 +16,10 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.metaedge.campguide",  // <-- ADD THIS
+      "config": {
+        "googleMobileAdsAppId": "ca-app-pub-6146316785763626~4324312217"
+      },
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -27,16 +31,6 @@
     },
     "androidNavigationBar": {
       "visible": true
-    },
-    "android": {
-      "config": {
-        "googleMobileAdsAppId": "ca-app-pub-6146316785763626~4324312217"
-      },
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      },
-      "edgeToEdgeEnabled": true
     },
     "web": {
       "favicon": "./assets/favicon.png"
