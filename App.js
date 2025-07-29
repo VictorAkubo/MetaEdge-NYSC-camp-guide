@@ -1,4 +1,7 @@
-import React, { useState, useEffect,useRef} from 'react';
+import React, { useState, useEffect,useRef} from 'react
+import * as Device from 'expo-device';
+import { AntDesign } from '@expo/vector-icons';
+import { Link } from 'expo-router';
 import {
   View,
   Text,
@@ -14,11 +17,8 @@ import {
   Button
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {
-  AdMobBanner,
-  AdMobInterstitial,
-  AdMobRewarded,
-} from 'expo-ads-admob';
+import mobileAds from 'react-native-google-mobile-ads';
+import { BannerAd, BannerAdSize,InterstitialAd,AdEventType, TestIds } from 'react-native-google-mobile-ads';
 import { Ionicons } from '@expo/vector-icons';
 import statesAndLGA from './statesandlga.json';
 import {
@@ -37,6 +37,23 @@ import {
 
 const { width, height } = Dimensions.get('window');
 
+const iosAdmobBanner = "ca-app-pub-12345678910/12345678910";
+const androidAdmobBanner = "ca-app-pub-6146316785763626/6401213583";
+const productionID = Device.osName === 'Android' ? androidAdmobBanner : iosAdmobBanner;
+
+const iosAdmobInterstitial = "ca-app-pub-12345678910/12345678910";
+const androidAdmobInterstitial = "ca-app-pub-6146316785763626/4038774129";
+const productionIDInterstitial = Device.osName === 'Android' ? androidAdmobInterstitial : iosAdmobInterstitial;
+const adUnitId = __DEV__ ? TestIds.INTERSTITIAL : productionIDInterstitial;
+// Make sure to always use a test ID when not in production 
+
+
+const interstitial = InterstitialAd.createForAdRequest(adUnitId, {
+  keywords: ['food', 'cooking', 'fruit','nysc'], // Update based on the most relevant keywords for your app/users, these are just random examples
+  requestNonPersonalizedAdsOnly: true, // Update based on the initial tracking settings from initialization earlier
+});
+
+
 const MetaEdgeNYSCGuide = () => {
   const [currentPage, setCurrentPage] = useState('home');
   const [fadeAnim] = useState(new Animated.Value(1));
@@ -52,7 +69,25 @@ const MetaEdgeNYSCGuide = () => {
   const [visible, setVisible] = useState(false);
   const [updatedDay, setUpdatedDay] = useState("");
   const [updatedMealName, setUpdatedMealName] = useState("");
+  const [isAdLoaded, setIsAdLoaded] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   
+  
+  
+  
+  useEffect(() => {
+    (async () => {
+      // Google AdMob will show any messages here that you just set up on the AdMob Privacy & Messaging page
+      const { status: trackingStatus } = await requestTrackingPermissionsAsync();
+      if (trackingStatus !== 'granted') {
+        // Do something here such as turn off Sentry tracking, store in context/redux to allow for personalized ads, etc.
+      }
+
+      // Initialize the ads
+      await mobileAds().initialize();
+    })();
+}, [])
+
 
   useEffect(() => {
     setStatesData(statesAndLGA);
@@ -941,6 +976,95 @@ ELIGIBILITY FOR NATIONAL SCHEME
       }).start();
     });
   };
+  
+  const Pagination = ({ }) => {
+
+  useEffect(() => {
+    // Event listener for when the ad is loaded
+    const unsubscribeLoaded = interstitial.addAdEventListener(AdEventType.LOADED, () => {
+      setLoaded(true);
+    });
+
+    // Event listener for when the ad is closed
+    const unsubscribeClosed = interstitial.addAdEventListener(AdEventType.CLOSED, () => {
+      setLoaded(false);
+
+      // Load a new ad when the current ad is closed
+      interstitial.load();
+    });
+
+    // Start loading the interstitial ad straight away
+    interstitial.load();
+
+    // Unsubscribe from events on unmount
+    return () => {
+      unsubscribeLoaded();
+      unsubscribeClosed();
+    };
+  }, []);
+
+
+  return (
+    <View
+      style={{
+        width: '100%',
+        flexDirection: 'row',
+        justifyContent: 'space-evenly',
+        alignItems: 'center',
+        marginVertical: 8,
+        paddingHorizontal: 10,
+      }}>
+
+        <Link asChild href="/previous-page">
+          <Button onPress={() => {
+            if (loaded) { interstitial.show(); }
+          }}>
+            <>
+              <AntDesign name="arrowleft" size={24} color="#fdb833" />
+              <Text>
+                Previous
+              </Text>
+            </>
+          </Button>
+        </Link>
+
+
+
+        <Link asChild href="/next-page">
+          <Button onPress={() => {
+            if (loaded) { interstitial.show(); }
+          }}>
+            <>
+              <Text>
+                Next
+              </Text>
+              <AntDesign name="arrowright" size={24} color="#fdb833" />
+            </>
+          </Button>
+        </Link>
+
+    </View>
+  );
+};
+  
+  const InlineAd = () => {
+  return (
+    <View style={{ height: isAdLoaded ? 'auto' : 0 }}>
+      <BannerAd
+        // It is extremely important to use test IDs as you can be banned/restricted by Google AdMob for inappropriately using real ad banners during testing
+        unitId={__DEV__ ? TestIds.BANNER : productionID}
+        size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+        requestOptions={{
+          requestNonPersonalizedAdsOnly: true, 
+          // You can change this setting depending on whether you want to use the permissions tracking we set up in the initializing
+        }}
+        onAdLoaded={() => {
+          setIsAdLoaded(true);
+        }}
+      />
+    </View >
+  );
+};
 
   const Header = () => (
     <View style={styles.header}>
@@ -1723,54 +1847,6 @@ ELIGIBILITY FOR NATIONAL SCHEME
   };
   
   
-  const ViewAd = () => {
-  // Show Interstitial Ads every 4 minutes
-  useEffect(() => {
-    const loadAndShowInterstitial = async () => {
-      try {
-        await AdMobInterstitial.setAdUnitID('ca-app-pub-6146316785763626/4038774129'); // Your Interstitial ID
-        await AdMobInterstitial.requestAdAsync({ servePersonalizedAds: true });
-        await AdMobInterstitial.showAdAsync();
-      } catch (error) {
-        console.log('Interstitial error:', error);
-      }
-    };
-
-    // Show immediately on app launch
-    loadAndShowInterstitial();
-
-    // Repeat every 4 minutes
-    const interval = setInterval(loadAndShowInterstitial, 4 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Rewarded Video (Support Us button)
-  const showRewardedAd = async () => {
-    try {
-      await AdMobRewarded.setAdUnitID('ca-app-pub-6146316785763626/6473365779'); // Your Rewarded Video ID
-      await AdMobRewarded.requestAdAsync();
-      await AdMobRewarded.showAdAsync();
-    } catch (error) {
-      console.log('Rewarded Ad error:', error);
-    }
-  };
-
-  return (
-    <View style={styles.container123}>
-      {/* Banner Ad (always visible) */}
-      <AdMobBanner
-        bannerSize="fullBanner"
-        adUnitID="ca-app-pub-6146316785763626/6401213583" // Your Banner ID
-        servePersonalizedAds
-        onDidFailToReceiveAdWithError={(err) => console.log(err)}
-      />
-
-      {/* Optional Support Button */}
-      <Button title="Watch a Video to Support Us" onPress={showRewardedAd} />
-    </View>
-  );
-}
-
 
   const renderCurrentPage = () => {
     switch (currentPage) {
@@ -1803,7 +1879,6 @@ ELIGIBILITY FOR NATIONAL SCHEME
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor="#059669" />
       <Header />
-      <ViewAd />
       {visible && (
         <SuccessModal
           message={`Your ${updatedMealName} Meal for ${updatedDay} updated successfully!`}
@@ -1811,6 +1886,8 @@ ELIGIBILITY FOR NATIONAL SCHEME
         />
       )}
       {renderCurrentPage()}
+      <Pagination />
+      <InlineAd />
     </SafeAreaView>
   );
 };
